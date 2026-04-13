@@ -3,72 +3,63 @@ import pickle
 import numpy as np
 import pandas as pd
 
-# Page config for a modern look
-st.set_page_config(page_title="Purchase AI", page_icon="🛍️", layout="centered")
+# Page styling
+st.set_page_config(page_title="Purchase Predictor", page_icon="📈", layout="centered")
 
-# Custom CSS for a professional, animated interface
+# Attractive UI Styling
 st.markdown("""
     <style>
-    .stApp {
-        background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+    .main {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
     .stButton>button {
-        width: 100%;
-        border-radius: 25px;
-        height: 3em;
-        background-color: #00d2ff;
-        color: white;
-        font-weight: bold;
-        border: none;
+        background: #00f2fe;
+        color: black;
+        border-radius: 20px;
         transition: 0.3s;
+        font-weight: bold;
     }
     .stButton>button:hover {
-        transform: scale(1.02);
-        background-color: #3a7bd5;
+        transform: scale(1.05);
+        background: #4facfe;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Correctly loading the Model3.pkl file
+# Load the model correctly
 @st.cache_resource
 def load_model():
+    # Make sure this filename matches your uploaded file exactly
     try:
         with open('Model3.pkl', 'rb') as file:
             return pickle.load(file)
     except FileNotFoundError:
-        st.error("Model3.pkl not found! Ensure the file is in your GitHub folder.")
+        st.error("Model file 'Model3.pkl' not found. Check your GitHub repository!")
         return None
 
 model = load_model()
 
-st.title("🎯 Customer Purchase Predictor")
-st.write("Input user details to predict ad conversion probability.")
+st.title("🎯 Social Network Ad Predictor")
+st.write("Predict if a customer will buy based on Age and Salary.")
 
-# Input card
+# Input Section
 with st.container():
-    col1, col2 = st.columns(2)
-    with col1:
-        age = st.number_input("Customer Age", 18, 100, 25)
-    with col2:
-        salary = st.number_input("Annual Salary ($)", 10000, 200000, 50000)
+    age = st.slider("Age", 18, 100, 30)
+    salary = st.number_input("Estimated Annual Salary ($)", value=50000, step=1000)
 
-if st.button("Predict Intent"):
+if st.button("Predict Purchase"):
     if model:
-        # Prepare input as a DataFrame to keep feature names consistent
-        input_data = pd.DataFrame([[age, salary]], columns=['Age', 'EstimatedSalary'])
+        # Based on your file, the model expects 2 features: Age and Salary 
+        features = np.array([[age, salary]])
         
-        # Make prediction
-        prediction = model.predict(input_data)
-        
-        # Check probability for the 'Purchase' class
-        prob = model.predict_proba(input_data)[0][1]
-        
+        with st.spinner('AI is analyzing...'):
+            prediction = model.predict(features)
+            
         st.divider()
-        
         if prediction[0] == 1:
-            st.balloons() # Success animation
-            st.success(f"✅ Prediction: This user is LIKELY to purchase! (Confidence: {prob:.2%})")
+            st.balloons() # Animated celebration
+            st.success("✅ Prediction: This user is likely to PURCHASE!")
         else:
-            st.snow() # "Cold" lead animation
-            st.warning(f"❌ Prediction: This user is UNLIKELY to purchase. (Confidence: {1-prob:.2%})")
+            st.snow() # Subtle negative animation
+            st.warning("❌ Prediction: This user is unlikely to purchase.")
