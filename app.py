@@ -1,70 +1,80 @@
 import streamlit as st
-import pickle
 import numpy as np
-import pandas as pd
+import joblib
 import os
+from streamlit_lottie import st_lottie
+import requests
 
-# Page setup
-st.set_page_config(page_title="Purchase Predictor AI", page_icon="🎯", layout="centered")
+# ------------------ PAGE CONFIG ------------------
+st.set_page_config(page_title="Social Network Ads Predictor", page_icon="🎯", layout="centered")
 
-# Attractive Custom CSS
-st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-    }
-    div.stButton > button {
-        background-color: #00f2fe;
-        color: black;
-        border-radius: 12px;
-        padding: 10px 24px;
-        font-weight: bold;
-        transition: 0.3s;
-        border: none;
-    }
-    div.stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# ------------------ LOTTIE ANIMATION ------------------
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
 
-# Robust Model Loading
+lottie_animation = load_lottie_url("https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json")
+
+# ------------------ LOAD MODEL ------------------
 @st.cache_resource
 def load_model():
-    model_path = 'Model3.pkl'
-    if os.path.exists(model_path):
-        with open(model_path, 'rb') as file:
-            return pickle.load(file)
-    else:
+    try:
+        file_path = "Model3.pkl"
+
+        if not os.path.exists(file_path):
+            st.error(f"🚨 File '{file_path}' not found in repository!")
+            return None
+
+        model = joblib.load(file_path)
+        return model
+
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
         return None
 
 model = load_model()
 
-st.title("🎯 Social Network Ad Predictor")
-st.write("Determine if a customer is likely to purchase based on profile data.")
+# ------------------ UI DESIGN ------------------
+st.markdown(
+    """
+    <h1 style='text-align: center; color: #4CAF50;'>🎯 Social Network Ad Predictor</h1>
+    <p style='text-align: center;'>Predict whether a customer will purchase a product</p>
+    """,
+    unsafe_allow_html=True
+)
 
-# Input Section
-age = st.slider("Customer Age", 18, 100, 30)
-salary = st.number_input("Estimated Annual Salary ($)", value=50000, step=1000)
+# Animation
+if lottie_animation:
+    st_lottie(lottie_animation, height=250)
 
-if st.button("Run AI Prediction"):
-    if model is not None:
-        # Your model expects 2 features: Age and Salary 
-        features = np.array([[age, salary]])
-        
-        with st.spinner('Analyzing...'):
-            prediction = model.predict(features)
-            # Probability for the conversion flair
-            prob = model.predict_proba(features)[0][1]
-        
-        st.divider()
-        if prediction[0] == 1:
-            st.balloons() # Success animation
-            st.success(f"✅ Likely to Purchase! ({prob:.1%} probability)")
-        else:
-            st.snow() # Subtle animation
-            st.warning(f"❌ Unlikely to Purchase ({prob:.1%} probability)")
+# ------------------ INPUT SECTION ------------------
+st.subheader("👤 Customer Details")
+
+age = st.slider("📅 Age", 18, 60, 25)
+salary = st.slider("💰 Estimated Salary", 10000, 200000, 50000)
+
+# ------------------ PREDICTION ------------------
+if st.button("🚀 Predict", use_container_width=True):
+
+    if model is None:
+        st.error("❌ Model not loaded. Check file & dependencies.")
     else:
-        st.error("🚨 Model3.pkl not found. Please ensure it is in your GitHub root folder.")
+        input_data = np.array([[age, salary]])
+
+        try:
+            prediction = model.predict(input_data)
+
+            if prediction[0] == 1:
+                st.success("✅ Customer is likely to PURCHASE")
+                st.balloons()
+            else:
+                st.warning("❌ Customer is NOT likely to purchase")
+
+        except Exception as e:
+            st.error(f"Prediction Error: {e}")
+
+# ------------------ FOOTER ------------------
+st.markdown("---")
+st.markdown("Made with ❤️ using Streamlit")
