@@ -1,87 +1,74 @@
 import streamlit as st
 import pickle
 import numpy as np
+import pandas as pd
 
-# Page configuration for a professional look
-st.set_page_config(page_title="Purchase Predictor AI", page_icon="🛍️", layout="centered")
+# Page config for a modern look
+st.set_page_config(page_title="Purchase AI", page_icon="🛍️", layout="centered")
 
-# Custom CSS for an attractive, animated UI
+# Custom CSS for a professional, animated interface
 st.markdown("""
     <style>
-    .main {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
-    div.stButton > button {
-        background-color: #4CAF50;
+    .stApp {
+        background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
         color: white;
-        border-radius: 10px;
-        border: none;
-        padding: 15px 32px;
-        font-size: 18px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        background-color: #45a049;
+    .stButton>button {
+        width: 100%;
+        border-radius: 25px;
+        height: 3em;
+        background-color: #00d2ff;
+        color: white;
+        font-weight: bold;
+        border: none;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        transform: scale(1.02);
+        background-color: #3a7bd5;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Load the Logistic Regression model 
+# Correctly loading the Model3.pkl file
 @st.cache_resource
 def load_model():
     try:
         with open('Model3.pkl', 'rb') as file:
             return pickle.load(file)
-    except Exception as e:
-        st.error(f"Error loading model: {e}")
+    except FileNotFoundError:
+        st.error("Model3.pkl not found! Ensure the file is in your GitHub folder.")
         return None
 
 model = load_model()
 
-# Header
-st.title("🎯 Ad Conversion Predictor")
-st.write("Using AI to determine if a customer is likely to purchase after seeing an ad.")
-st.divider()
+st.title("🎯 Customer Purchase Predictor")
+st.write("Input user details to predict ad conversion probability.")
 
-# Input Section with Columns
-col1, col2 = st.columns(2)
+# Input card
+with st.container():
+    col1, col2 = st.columns(2)
+    with col1:
+        age = st.number_input("Customer Age", 18, 100, 25)
+    with col2:
+        salary = st.number_input("Annual Salary ($)", 10000, 200000, 50000)
 
-with col1:
-    age = st.number_input("Customer Age", min_value=18, max_value=100, value=30)
-
-with col2:
-    salary = st.number_input("Estimated Annual Salary ($)", min_value=0, value=50000, step=500)
-
-# Prediction Logic
-if st.button("Analyze Purchase Intent"):
+if st.button("Predict Intent"):
     if model:
-        # Based on your model metadata, it expects 2 features (Age, Salary) 
-        features = np.array([[age, salary]])
+        # Prepare input as a DataFrame to keep feature names consistent
+        input_data = pd.DataFrame([[age, salary]], columns=['Age', 'EstimatedSalary'])
         
-        # Add a "thinking" animation
-        with st.spinner('Running AI Analysis...'):
-            prediction = model.predict(features)
-            # Use predict_proba for a more "animated" feel with progress bars
-            probability = model.predict_proba(features)[0][1] 
+        # Make prediction
+        prediction = model.predict(input_data)
         
-        st.subheader("Results")
+        # Check probability for the 'Purchase' class
+        prob = model.predict_proba(input_data)[0][1]
+        
+        st.divider()
         
         if prediction[0] == 1:
-            st.balloons() # Celebration animation
-            st.success(f"✅ High Purchase Intent! ({probability*100:.1f}%)")
-            st.write("This customer is very likely to click and buy.")
+            st.balloons() # Success animation
+            st.success(f"✅ Prediction: This user is LIKELY to purchase! (Confidence: {prob:.2%})")
         else:
-            st.snow() # Subtle "cold" animation
-            st.warning(f"❌ Low Purchase Intent ({probability*100:.1f}%)")
-            st.write("This customer is unlikely to purchase at this time.")
-            
-        # Add a progress bar for visual flair
-        st.progress(probability)
-    else:
-        st.error("Model file not found. Please ensure 'Model3.pkl' is in the same folder.")
-
-# Footer
-st.caption("Powered by Scikit-Learn 1.6.1 and Streamlit")
+            st.snow() # "Cold" lead animation
+            st.warning(f"❌ Prediction: This user is UNLIKELY to purchase. (Confidence: {1-prob:.2%})")
