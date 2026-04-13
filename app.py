@@ -3,10 +3,10 @@ import pickle
 import numpy as np
 import pandas as pd
 
-# Page setup for a modern look
-st.set_page_config(page_title="Ad Conversion AI", page_icon="🎯", layout="centered")
+# Page setup for an attractive UI
+st.set_page_config(page_title="Ad Predictor AI", page_icon="🎯", layout="centered")
 
-# Custom CSS for an attractive, animated UI
+# Custom CSS for Glassmorphism effect and animations
 st.markdown("""
     <style>
     .stApp {
@@ -15,26 +15,26 @@ st.markdown("""
     }
     div.stButton > button {
         background-color: #00f2fe;
-        color: #000;
+        color: black;
         border-radius: 12px;
         padding: 10px 24px;
         font-weight: bold;
-        transition: 0.3s;
+        transition: 0.3s ease;
         border: none;
     }
     div.stButton > button:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
         background-color: #4facfe;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Correctly loading the Model3.pkl file
+# Load the model correctly
 @st.cache_resource
 def load_model():
     try:
-        # Note: Ensure the file is named 'Model3.pkl' exactly in GitHub
+        # NOTE: Ensure the file is named 'Model3.pkl' exactly in your GitHub
         with open('Model3.pkl', 'rb') as file:
             return pickle.load(file)
     except FileNotFoundError:
@@ -44,29 +44,29 @@ def load_model():
 model = load_model()
 
 st.title("🎯 Social Network Ad Predictor")
-st.write("Determine if a customer is likely to purchase based on their profile.")
+st.write("Predict if a customer will purchase an item based on their profile.")
 
 # Input Section
 with st.container():
     age = st.slider("Customer Age", 18, 100, 30)
-    salary = st.number_input("Estimated Annual Salary ($)", min_value=0, value=50000, step=1000)
+    salary = st.number_input("Estimated Annual Salary ($)", value=50000, step=1000)
 
 if st.button("Analyze Purchase Intent"):
     if model:
-        # Your model expects exactly 2 features (Age and Salary) 
+        # Your model expects exactly 2 features (Age and Salary)
         features = np.array([[age, salary]])
         
-        with st.spinner('AI is calculating probability...'):
+        with st.spinner('AI is processing...'):
             prediction = model.predict(features)
-            # Fetch conversion probability for visual flair
+            # Use predict_proba for visual confidence scores
             prob = model.predict_proba(features)[0][1]
         
         st.divider()
         if prediction[0] == 1:
             st.balloons() # Success animation
-            st.success(f"✅ Likely to Purchase! ({prob:.1%} probability)")
+            st.success(f"✅ Prediction: Likely to Purchase! ({prob:.1%} confidence)")
         else:
             st.snow() # Subtle negative animation
-            st.warning(f"❌ Unlikely to Purchase ({prob:.1%} probability)")
+            st.warning(f"❌ Prediction: Unlikely to Purchase ({prob:.1%} confidence)")
     else:
-        st.error("Model not loaded. Ensure 'Model3.pkl' is in your repository.")
+        st.error("Model not loaded. Ensure 'Model3.pkl' is in your repository root.")
