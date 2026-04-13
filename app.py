@@ -1,80 +1,60 @@
 import streamlit as st
+import pickle
 import numpy as np
-# import joblib
-import os
-from streamlit_lottie import st_lottie
+import pandas as pd
 import requests
+from streamlit_lottie import st_lottie
 
-# ------------------ PAGE CONFIG ------------------
-st.set_page_config(page_title="Social Network Ads Predictor", page_icon="🎯", layout="centered")
+# Page configuration
+st.set_page_config(page_title="Ad Predictor AI", page_icon="🎯", layout="centered")
 
-# ------------------ LOTTIE ANIMATION ------------------
-def load_lottie_url(url):
+# Function to load Lottie animations
+def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
-lottie_animation = load_lottie_url("https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json")
+lottie_hello = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_qpwb7qsq.json")
 
-# ------------------ LOAD MODEL ------------------
+# Custom CSS
+st.markdown("""
+    <style>
+    .stApp { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; }
+    div.stButton > button { background-color: #00f2fe; color: black; border-radius: 10px; font-weight: bold; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Load the model
 @st.cache_resource
 def load_model():
     try:
-        file_path = "Model3.pkl"
-
-        if not os.path.exists(file_path):
-            st.error(f"🚨 File '{file_path}' not found in repository!")
-            return None
-
-        model = joblib.load(file_path)
-        return model
-
-    except Exception as e:
-        st.error(f"❌ Error loading model: {e}")
+        with open('Model3.pkl', 'rb') as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        st.error("Model3.pkl not found! Ensure it is in your GitHub root.")
         return None
 
 model = load_model()
 
-# ------------------ UI DESIGN ------------------
-st.markdown(
-    """
-    <h1 style='text-align: center; color: #4CAF50;'>🎯 Social Network Ad Predictor</h1>
-    <p style='text-align: center;'>Predict whether a customer will purchase a product</p>
-    """,
-    unsafe_allow_html=True
-)
+# Header with Animation
+st_lottie(lottie_hello, height=200, key="coding")
+st.title("🎯 Social Network Ad Predictor")
 
-# Animation
-if lottie_animation:
-    st_lottie(lottie_animation, height=250)
+# Input Section
+age = st.slider("Customer Age", 18, 100, 30)
+salary = st.number_input("Estimated Annual Salary ($)", value=50000)
 
-# ------------------ INPUT SECTION ------------------
-st.subheader("👤 Customer Details")
-
-age = st.slider("📅 Age", 18, 60, 25)
-salary = st.slider("💰 Estimated Salary", 10000, 200000, 50000)
-
-# ------------------ PREDICTION ------------------
-if st.button("🚀 Predict", use_container_width=True):
-
-    if model is None:
-        st.error("❌ Model not loaded. Check file & dependencies.")
-    else:
-        input_data = np.array([[age, salary]])
-
-        try:
-            prediction = model.predict(input_data)
-
-            if prediction[0] == 1:
-                st.success("✅ Customer is likely to PURCHASE")
-                st.balloons()
-            else:
-                st.warning("❌ Customer is NOT likely to purchase")
-
-        except Exception as e:
-            st.error(f"Prediction Error: {e}")
-
-# ------------------ FOOTER ------------------
-st.markdown("---")
-st.markdown("Made with ❤️ using Streamlit")
+if st.button("Analyze Purchase Intent"):
+    if model:
+        # Model3.pkl expects 2 features: Age and Salary
+        features = np.array([[age, salary]])
+        prediction = model.predict(features)
+        
+        st.divider()
+        if prediction[0] == 1:
+            st.balloons()
+            st.success("✅ Result: High probability of purchase!")
+        else:
+            st.snow()
+            st.warning("❌ Result: Low probability of purchase.")
