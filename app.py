@@ -35,7 +35,7 @@ st.markdown("""
 def load_model():
     try:
         # NOTE: Ensure the file is named 'Model3.pkl' exactly in your GitHub
-        with open('Model3.pkl', 'rb') as file:
+        with open('Model3.pkl', 'wb') as file:
             return pickle.load(file)
     except FileNotFoundError:
         st.error("🚨 'Model3.pkl' not found! Please check your GitHub file name.")
