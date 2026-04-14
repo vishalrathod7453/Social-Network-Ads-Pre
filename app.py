@@ -2,59 +2,58 @@ import streamlit as st
 import pickle
 import numpy as np
 import pandas as pd
-import requests
 from streamlit_lottie import st_lottie
+import requests
 
-# Page configuration
+# 1. Page Configuration
 st.set_page_config(page_title="Ad Predictor AI", page_icon="🎯", layout="centered")
 
-# Function to load Lottie animations
-def load_lottieurl(url: str):
+# 2. Load Assets (Animation)
+def load_lottieurl(url):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
-lottie_hello = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_qpwb7qsq.json")
+lottie_coding = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_qpwb7t7n.json")
 
-# Custom CSS
-st.markdown("""
-    <style>
-    .stApp { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; }
-    div.stButton > button { background-color: #00f2fe; color: black; border-radius: 10px; font-weight: bold; }
-    </style>
-    """, unsafe_allow_html=True)
+# 3. Load the Model
+with open('Model3.pkl', 'rb') as file:
+    model = pickle.load(file)
 
-# Load the model
-@st.cache_resource
-def load_model():
-    try:
-        with open('Model3.pkl', 'rb') as file:
-            return pickle.load(file)
-    except FileNotFoundError:
-        st.error("Model3.pkl not found! Ensure it is in your GitHub root.")
-        return None
-
-model = load_model()
-
-# Header with Animation
-st_lottie(lottie_hello, height=200, key="coding")
+# 4. UI Header
 st.title("🎯 Social Network Ad Predictor")
+st_lottie(lottie_coding, height=200, key="coding")
+st.write("Determine if a customer is likely to purchase based on their profile.")
 
-# Input Section
-age = st.slider("Customer Age", 18, 100, 30)
-salary = st.number_input("Estimated Annual Salary ($)", value=50000)
+# 5. User Input Form
+st.markdown("---")
+with st.container():
+    st.subheader("Customer Demographics")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        age = st.slider("Select Age", 18, 100, 30)
+    with col2:
+        salary = st.number_input("Estimated Annual Salary ($)", min_value=10000, max_value=200000, value=50000, step=500)
 
-if st.button("Analyze Purchase Intent"):
-    if model:
-        # Model3.pkl expects 2 features: Age and Salary
-        features = np.array([[age, salary]])
-        prediction = model.predict(features)
-        
-        st.divider()
-        if prediction[0] == 1:
-            st.balloons()
-            st.success("✅ Result: High probability of purchase!")
-        else:
-            st.snow()
-            st.warning("❌ Result: Low probability of purchase.")
+# 6. Prediction Logic
+if st.button("Predict Likelihood"):
+    # Prepare input for the Logistic Regression model
+    input_data = np.array([[age, salary]])
+    prediction = model.predict(input_data)
+    probability = model.predict_proba(input_data)[0][1]
+
+    st.markdown("---")
+    if prediction[0] == 1:
+        st.success(f"### ✅ Likely to Purchase!")
+        st.balloons()
+    else:
+        st.warning(f"### ❌ Unlikely to Purchase")
+    
+    st.info(f"Confidence Score: {probability:.2%}")
+
+# 7. Sidebar Info
+st.sidebar.header("About Model")
+st.sidebar.write("Algorithm: Logistic Regression")
+st.sidebar.write("Regularization: L2 (Ridge)")
