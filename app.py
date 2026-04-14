@@ -18,7 +18,7 @@ def load_lottieurl(url):
 lottie_shopping = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_9w9of95a.json")
 
 # Load your KNN Model
-with open('Model3.pkl', 'rb') as file:
+with open('Model3.pkl', 'wb') as file:
     model = pickle.load(file)
 
 # UI Header
