@@ -2,7 +2,6 @@ import streamlit as st
 import pickle
 import numpy as np
 import requests
-from streamlit_lottie import st_lottie
 
 # Page configuration
 st.set_page_config(page_title="Ad Purchase Predictor", page_icon="🛍️", layout="centered")
@@ -18,7 +17,7 @@ def load_lottieurl(url):
 lottie_shopping = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_9w9of95a.json")
 
 # Load your KNN Model
-with open('Model3.pkl', 'wb') as file:
+with open('Model3.pkl', 'rb') as file:
     model = pickle.load(file)
 
 # UI Header
